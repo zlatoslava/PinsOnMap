@@ -1,4 +1,10 @@
 <resources>
     <string name="app_name">PinsOnMap</string>
     <string name="title_activity_maps">Map</string>
+    <string name="show_services">Show services</string>
+    <string name="choose_service">Choose service to show on map</string>
+    <string name="service_a">Service \"a\"</string>
+    <string name="service_b">Service \"b\"</string>
+    <string name="service_c">Service \"c\"</string>
+    <string name="show">Show</string>
 </resources>

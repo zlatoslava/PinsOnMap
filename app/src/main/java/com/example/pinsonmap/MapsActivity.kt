@@ -1,8 +1,13 @@
 package com.example.pinsonmap
 
+import android.app.Activity
+import android.app.AlertDialog
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import com.example.pinsonmap.models.Pin
 import com.example.pinsonmap.models.PinsResponse
 import com.example.pinsonmap.utils.getJsonDataFromAsset
@@ -18,6 +23,7 @@ import java.util.*
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
+    private val FILTER_ACTIVITY_REQUEST_CODE = 0
     private lateinit var map: GoogleMap
     private lateinit var pins: List<Pin>
 
@@ -43,20 +49,82 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
 
-        pins.filter { it.service.equals("c") }.forEach{
-            val pin = LatLng(it.coordinates.lat, it.coordinates.lng)
-            val snippet = String.format(
-                Locale.getDefault(),
-                "Lat: %1$.5f, Long: %2$.5f",
-                it.coordinates.lat,
-                it.coordinates.lng
-            )
-            map.addMarker(MarkerOptions()
-                .position(pin)
-                .title(it.service)
-                .snippet(snippet))
-        }
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(55.751244, 37.618423), 11f))
+//        pins.filter { it.service.equals("c") }.forEach {
+//            val pin = LatLng(it.coordinates.lat, it.coordinates.lng)
+//            val snippet = String.format(
+//                Locale.getDefault(),
+//                "Lat: %1$.5f, Long: %2$.5f",
+//                it.coordinates.lat,
+//                it.coordinates.lng
+//            )
+//            map.addMarker(
+//                MarkerOptions()
+//                    .position(pin)
+//                    .title(it.service)
+//                    .snippet(snippet)
+//            )
+//        }
+//        map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(55.751244, 37.618423), 11f))
 
     }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        val inflater = menuInflater
+        inflater.inflate(R.menu.toolbar_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.show_services -> {
+            startFilterActivity()
+            true
+        }
+        else -> super.onOptionsItemSelected(item)
+    }
+
+    private fun startFilterActivity() {
+        val intent = Intent(this, FilterActivity::class.java)
+        startActivityForResult(intent, FILTER_ACTIVITY_REQUEST_CODE)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == FILTER_ACTIVITY_REQUEST_CODE) {
+            if (resultCode == Activity.RESULT_OK) {
+                val stackOfServices = data!!.getSerializableExtra("keyName") as ArrayDeque<*>
+                //Log.d("mtag", "$stackOfServices + ${stackOfServices.pop()}")
+                val service = stackOfServices.pop()
+                pins.filter { it.service == service }.forEach {
+                    val pin = LatLng(it.coordinates.lat, it.coordinates.lng)
+                    val snippet = String.format(
+                        Locale.getDefault(),
+                        "Lat: %1$.5f, Long: %2$.5f",
+                        it.coordinates.lat,
+                        it.coordinates.lng
+                    )
+                    map.addMarker(
+                        MarkerOptions()
+                            .position(pin)
+                            .title(it.service)
+                            .snippet(snippet)
+                    )
+                }
+                map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(55.751244, 37.618423), 11f))
+
+            } else {
+                val builder = AlertDialog.Builder(this)
+                builder.setTitle("Error")
+                builder.setMessage(
+                    "No services were marked!\n\n" +
+                            "Please mark some service and try again."
+                )
+                builder.setNeutralButton("Ok") { dialog, which ->
+                    startFilterActivity()
+                }
+                builder.create().show()
+            }
+        }
+    }
+
 }
