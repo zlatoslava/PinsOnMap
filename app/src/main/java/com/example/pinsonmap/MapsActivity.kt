@@ -90,27 +90,17 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
+        map.clear() //TODO: change
+
         if (requestCode == FILTER_ACTIVITY_REQUEST_CODE) {
             if (resultCode == Activity.RESULT_OK) {
+
                 val stackOfServices = data!!.getSerializableExtra("keyName") as ArrayDeque<*>
-                //Log.d("mtag", "$stackOfServices + ${stackOfServices.pop()}")
-                val service = stackOfServices.pop()
-                pins.filter { it.service == service }.forEach {
-                    val pin = LatLng(it.coordinates.lat, it.coordinates.lng)
-                    val snippet = String.format(
-                        Locale.getDefault(),
-                        "Lat: %1$.5f, Long: %2$.5f",
-                        it.coordinates.lat,
-                        it.coordinates.lng
-                    )
-                    map.addMarker(
-                        MarkerOptions()
-                            .position(pin)
-                            .title(it.service)
-                            .snippet(snippet)
-                    )
+
+                while(!stackOfServices.isEmpty()){
+                    showServices(stackOfServices.pop() as String)
                 }
-                map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(55.751244, 37.618423), 11f))
+
 
             } else {
                 val builder = AlertDialog.Builder(this)
@@ -125,6 +115,25 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 builder.create().show()
             }
         }
+    }
+
+    private fun showServices(s: String) {
+        pins.filter { it.service == s }.forEach {
+            val pin = LatLng(it.coordinates.lat, it.coordinates.lng)
+            val snippet = String.format(
+                Locale.getDefault(),
+                "Lat: %1$.5f, Long: %2$.5f",
+                it.coordinates.lat,
+                it.coordinates.lng
+            )
+            map.addMarker(
+                MarkerOptions()
+                    .position(pin)
+                    .title(it.service)
+                    .snippet(snippet)
+            )
+        }
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(55.751244, 37.618423), 11f))
     }
 
 }

@@ -30,11 +30,11 @@ class FilterActivity : AppCompatActivity() {
 
     private fun getListOfServices(): ArrayDeque<String> {
         val stackOfServices = ArrayDeque<String>()
-        when(true) {
-            checkBoxA.isChecked -> stackOfServices.push("a")
-            checkBoxB.isChecked -> stackOfServices.push ("b")
-            checkBoxC.isChecked -> stackOfServices.push("c")
-        }
+
+            if(checkBoxA.isChecked)  stackOfServices.push("a")
+            if(checkBoxB.isChecked)  stackOfServices.push ("b")
+            if(checkBoxC.isChecked)  stackOfServices.push("c")
+
         return stackOfServices
     }
 }
