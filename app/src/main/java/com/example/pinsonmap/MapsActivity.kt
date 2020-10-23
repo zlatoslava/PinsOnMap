@@ -5,7 +5,6 @@ import android.app.AlertDialog
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import com.example.pinsonmap.models.Pin
@@ -29,43 +28,22 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.activity_maps)
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        val mapFragment = supportFragmentManager
-            .findFragmentById(R.id.map) as SupportMapFragment
+        val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
         parseJson()
     }
 
-    fun parseJson() {
+    private fun parseJson() {           //parse json file from local directory into list of pins
         val jsonFileString = getJsonDataFromAsset(applicationContext, "pins.json")
-
-        val gson = Gson()
-        val pinsResponse = gson.fromJson(jsonFileString, PinsResponse::class.java)
+        val pinsResponse = Gson().fromJson(jsonFileString, PinsResponse::class.java)
         pins = pinsResponse.pins
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
-
-//        pins.filter { it.service.equals("c") }.forEach {
-//            val pin = LatLng(it.coordinates.lat, it.coordinates.lng)
-//            val snippet = String.format(
-//                Locale.getDefault(),
-//                "Lat: %1$.5f, Long: %2$.5f",
-//                it.coordinates.lat,
-//                it.coordinates.lng
-//            )
-//            map.addMarker(
-//                MarkerOptions()
-//                    .position(pin)
-//                    .title(it.service)
-//                    .snippet(snippet)
-//            )
-//        }
-//        map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(55.751244, 37.618423), 11f))
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -90,34 +68,21 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        map.clear() //TODO: change
+        map.clear()
 
         if (requestCode == FILTER_ACTIVITY_REQUEST_CODE) {
             if (resultCode == Activity.RESULT_OK) {
-
-                val stackOfServices = data!!.getSerializableExtra("keyName") as ArrayDeque<*>
-
-                while(!stackOfServices.isEmpty()){
+                val stackOfServices = data!!.getSerializableExtra("stackOfServices") as ArrayDeque<*>           //Get list of services which were marked from FilterActivity
+                while (!stackOfServices.isEmpty()) {
                     showServices(stackOfServices.pop() as String)
                 }
-
-
             } else {
-                val builder = AlertDialog.Builder(this)
-                builder.setTitle("Error")
-                builder.setMessage(
-                    "No services were marked!\n\n" +
-                            "Please mark some service and try again."
-                )
-                builder.setNeutralButton("Ok") { dialog, which ->
-                    startFilterActivity()
-                }
-                builder.create().show()
+                showDialogNoServicesWereMarked()
             }
         }
     }
 
-    private fun showServices(s: String) {
+    private fun showServices(s: String) {           // Create pins on map if such service was marked
         pins.filter { it.service == s }.forEach {
             val pin = LatLng(it.coordinates.lat, it.coordinates.lng)
             val snippet = String.format(
@@ -126,14 +91,29 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 it.coordinates.lat,
                 it.coordinates.lng
             )
-            map.addMarker(
+            map.addMarker(           //add marker on map with title "type of service" and exact coordinates
                 MarkerOptions()
                     .position(pin)
                     .title(it.service)
                     .snippet(snippet)
             )
         }
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(55.751244, 37.618423), 11f))
+        map.moveCamera(           //Move camera on map to convenient view of city
+            CameraUpdateFactory.newLatLngZoom(
+                LatLng(55.751244, 37.618423),           // Moscow coordinates
+                11f
+            )
+        )
     }
 
+    private fun showDialogNoServicesWereMarked() {
+        val builder = AlertDialog.Builder(this).apply {
+            setTitle("Error")
+            setMessage("No services were marked!\n\n" + "Please mark some service and try again.")
+            setNeutralButton("Ok") { dialog, which ->
+                startFilterActivity()
+            }
+        }
+        builder.create().show()
+    }
 }
